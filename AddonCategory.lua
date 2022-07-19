@@ -2,7 +2,7 @@ AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
 AddonCategory.name = "AddonCategory"
-AddonCategory.version = "0.1"
+AddonCategory.version = "0.2"
 
 local sV
 
@@ -50,7 +50,7 @@ local function BuildMasterList(self)
     for i = 1, AddOnManager:GetNumAddOns() do
         local name, title, author, description, enabled, state, isOutOfDate, isLibrary = AddOnManager:GetAddOnInfo(i)
         if isLibrary ~= IS_LIBRARY then
-            table.insert(AddonCategory.listAddons, name)
+            AddonCategory.listAddons[i] = name
         end
 
         local entryData = {
@@ -129,16 +129,18 @@ local function AddAddonTypeSection(self, isLibrary, sectionTitleText)
         local scrollData = ZO_ScrollList_GetDataList(self.list)
         scrollData[#scrollData + 1] = ZO_ScrollList_CreateDataEntry(SECTION_HEADER_DATA, { isLibrary = isLibrary, text = isLibrary })
         for _, entryData in ipairs(addonEntries) do
-            if entryData.expandable and expandedAddons[entryData.index] then
-                entryData.expanded = true
+            if sV.sectionsOpen[isLibrary] == nil or sV.sectionsOpen[isLibrary] == true then
+                if entryData.expandable and expandedAddons[entryData.index] then
+                    entryData.expanded = true
 
-                local useHeight, typeId = self:SetupTypeId(entryData.addOnDescription, entryData.addOnDependencyText)
+                    local useHeight, typeId = self:SetupTypeId(entryData.addOnDescription, entryData.addOnDependencyText)
 
-                entryData.height = useHeight
-                scrollData[#scrollData + 1] = ZO_ScrollList_CreateDataEntry(typeId, entryData)
-            else
-                entryData.height = ZO_ADDON_ROW_HEIGHT
-                scrollData[#scrollData + 1] = ZO_ScrollList_CreateDataEntry(ADDON_DATA, entryData)
+                    entryData.height = useHeight
+                    scrollData[#scrollData + 1] = ZO_ScrollList_CreateDataEntry(typeId, entryData)
+                else
+                    entryData.height = ZO_ADDON_ROW_HEIGHT
+                    scrollData[#scrollData + 1] = ZO_ScrollList_CreateDataEntry(ADDON_DATA, entryData)
+                end
             end
         end
     else
@@ -148,6 +150,7 @@ end
 
 local cptToolbar = 0
 local sectionsHeader = {}
+local sectionsEnable = {}
 local _SetupSectionHeaderRow = ADD_ON_MANAGER.SetupSectionHeaderRow
 local function SetupSectionHeaderRow(self, control, data)
     local customCategory = false
@@ -181,20 +184,20 @@ local function SetupSectionHeaderRow(self, control, data)
         ZO_MenuBar_SetClickSound(control.toolBar, "DEFAULT_CLICK")
 
 
-        local function CreateButtonData(tooltipString, nb, normal, highlight, disabled, functionCallback)
+        local function CreateButtonData(tooltipString, nb, icon, functionCallback)
             return {
                 activeTabText = data.text,
                 categoryName = data.text,
                 CustomTooltipFunction = function(tooltip)
-                    SetTooltipText(tooltip, tooltipString .. data.text)
+                    SetTooltipText(tooltip, tooltipString .. " all addons of " .. data.text)
                 end,
                 tooltip = "tooltip",
                 alwaysShowTooltip = true,
                 descriptor = nb,
-                normal = normal,
-                pressed = normal,
-                highlight = highlight,
-                disabled = disabled,
+                normal = "esoui/art/buttons/" .. icon .. "_up.dds",
+                pressed = "esoui/art/buttons/" .. icon .. "_up.dds",
+                highlight = "esoui/art/buttons/" .. icon .. "_over.dds",
+                disabled = "esoui/art/buttons/" .. icon .. "_down.dds",
                 callback = function(tabData)
                     functionCallback(tabData)
 
@@ -207,14 +210,43 @@ local function SetupSectionHeaderRow(self, control, data)
         end
 
         local function callbackEnableDisable(tabData)
-            d("Click Enable " .. data.text .. " (" .. data.sortIndex .. ")")
+            if sectionsEnable[data.text] == nil then
+                sectionsEnable[data.text] = false
+            end
+            local textTrueFalse = "false"
+            if sectionsEnable[data.text] == true then
+                textTrueFalse = "true"
+            end
+            for key, value in pairs(AddonCategory.listAddons) do
+                if sV[value] == data.text then
+                    AddOnManager:SetAddOnEnabled(key, sectionsEnable[data.text])
+                end
+            end
+            sectionsEnable[data.text] = not sectionsEnable[data.text]
+            ADD_ON_MANAGER.isDirty = true
+            ADD_ON_MANAGER:RefreshMultiButton()
         end
         local function callbackShowHide(tabData)
-            d("Click Show " .. data.text .. " (" .. data.sortIndex .. ")")
+            if sV.sectionsOpen[data.text] == nil then
+                sV.sectionsOpen[data.text] = true
+            end
+            sV.sectionsOpen[data.text] = not sV.sectionsOpen[data.text]
         end
     
-        ZO_MenuBar_AddButton(control.toolBar, CreateButtonData("Show / hide all addons of ", 1, "esoui/art/buttons/rightarrow_up.dds", "esoui/art/buttons/rightarrow_over.dds", "esoui/art/buttons/rightarrow_down.dds", callbackShowHide))
-        ZO_MenuBar_AddButton(control.toolBar, CreateButtonData("Enable / disable all addons of ", 2, "esoui/art/buttons/edit_cancel_up.dds", "esoui/art/buttons/edit_cancel_over.dds", "esoui/art/buttons/edit_cancel_down.dds", callbackEnableDisable))
+        local iconEnableDisable = "edit_cancel"
+        local stringEnableDisable = "Disable"
+        if sectionsEnable[data.text] == true then
+            iconEnableDisable = "accept"
+            stringEnableDisable = "Enable"
+        end
+        local iconShowHide = "large_rightarrow"
+        local stringShowHide = "Hide"
+        if sV.sectionsOpen[data.text] == false then
+            iconShowHide = "large_downarrow"
+            stringShowHide = "Show"
+        end
+        ZO_MenuBar_AddButton(control.toolBar, CreateButtonData(stringShowHide, 1, iconShowHide, callbackShowHide))
+        ZO_MenuBar_AddButton(control.toolBar, CreateButtonData(stringEnableDisable, 2, iconEnableDisable, callbackEnableDisable))
 
         control.toolBar:SetHidden(false)
         local rowNb = control:GetName():gsub("ZO_AddOnsList2Row", "")
@@ -283,9 +315,7 @@ ADD_ON_MANAGER.OnExpandButtonClicked = OnExpandButtonClicked
 ----------
 function AddonCategory:Initialize()
 	--Saved Variables
-	AddonCategory.savedVariables = ZO_SavedVars:NewAccountWide("AddonCategoryVariables", 0, nil, {
-        listCategory = {"User Interface", "Trials / Dungeons", "PvP", "Map"},
-    })
+	AddonCategory.savedVariables = ZO_SavedVars:NewAccountWide("AddonCategoryVariables", 1, nil, AddonCategory.defaultSV)
 	sV = AddonCategory.savedVariables
 
 	--Settings

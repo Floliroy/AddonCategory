@@ -1,7 +1,7 @@
 ## Title: AddonCategory
 ## APIVersion: 100035
 ## Author: Floliroy
-## Version: 0.1
+## Version: 0.2
 ## DependsOn: LibAddonMenu-2.0
 ## SavedVariables: AddonCategoryVariables
 
@@ -13,3 +13,4 @@
 
 AddonCategory.lua
 AddonCategorySettings.lua
+AddonCategoryDatas.lua

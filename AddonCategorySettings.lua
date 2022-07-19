@@ -34,7 +34,11 @@ function AddonCategory.CreateSettingsWindow()
 
     local addon, category, newCategory, categoryName, newCategoryName, categoryOrder, newOrder
 
-    table.sort(AddonCategory.listAddons, function (a, b) return a < b end)
+    local addonsList = {}
+    for key, value in pairs(AddonCategory.listAddons) do
+        table.insert(addonsList, value)
+    end
+    table.sort(addonsList, function (a, b) return a < b end)
 	
 	local optionsData = {
 		{
@@ -83,11 +87,11 @@ function AddonCategory.CreateSettingsWindow()
             type = "dropdown",
 			name = "List Addons",
 			tooltip = "List of all of your non librairies addons.",
-			choices = AddonCategory.listAddons,
-			default = AddonCategory.listAddons[1],
+			choices = addonsList,
+			default = addonsList[1],
 			getFunc = function() return addon end,
 			setFunc = function(selected)
-				for index, name in ipairs(AddonCategory.listAddons) do
+				for index, name in ipairs(addonsList) do
 					if name == selected then
 						addon = name
 					end
@@ -123,9 +127,6 @@ function AddonCategory.CreateSettingsWindow()
                     sV[addon] = category
                 end
             end,
-        },
-        {
-            type = "divider",
         },
 		{
 			type = "header",
