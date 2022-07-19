@@ -147,6 +147,7 @@ local function AddAddonTypeSection(self, isLibrary, sectionTitleText)
 end
 
 local cptToolbar = 0
+local sectionsHeader = {}
 local _SetupSectionHeaderRow = ADD_ON_MANAGER.SetupSectionHeaderRow
 local function SetupSectionHeaderRow(self, control, data)
     local customCategory = false
@@ -183,7 +184,7 @@ local function SetupSectionHeaderRow(self, control, data)
             activeTabText = data.text,
             categoryName = data.text,
             CustomTooltipFunction = function(tooltip)
-                SetTooltipText(tooltip, "Enable / disable all addons of " .. data.text .. " (prev: " .. previousText .. ")")
+                SetTooltipText(tooltip, "Enable / disable all addons of " .. data.text)
             end,
             tooltip = "tooltip",
             alwaysShowTooltip = true,
@@ -202,7 +203,14 @@ local function SetupSectionHeaderRow(self, control, data)
         }
     
         ZO_MenuBar_AddButton(control.toolBar, buttonData)
+
         control.toolBar:SetHidden(false)
+        local rowNb = control:GetName():gsub("ZO_AddOnsList2Row", "")
+        if sectionsHeader[rowNb] ~= nil then
+            sectionsHeader[rowNb]:SetHidden(true)
+        end
+        sectionsHeader[rowNb] = control.toolBar
+
         ZO_MenuBar_ClearSelection(control.toolBar)
     else
         if control.toolBar then
