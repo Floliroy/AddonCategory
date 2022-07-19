@@ -167,7 +167,7 @@ local function SetupSectionHeaderRow(self, control, data)
         cptToolbar = cptToolbar + 1
         control.toolBar = CreateControlFromVirtual("$(parent)ToolBar" .. cptToolbar, control, "ZO_MenuBarTemplate")
         control.toolBar:ClearAnchors()
-        control.toolBar:SetAnchor(BOTTOMRIGHT, control.textControl, BOTTOMRIGHT, 30, 4)
+        control.toolBar:SetAnchor(BOTTOMRIGHT, control.textControl, BOTTOMRIGHT, 65, 4)
     
         ZO_MenuBar_OnInitialized(control.toolBar)
         local barData = {
@@ -180,29 +180,41 @@ local function SetupSectionHeaderRow(self, control, data)
         ZO_MenuBar_SetData(control.toolBar, barData)
         ZO_MenuBar_SetClickSound(control.toolBar, "DEFAULT_CLICK")
 
-        local buttonData = {
-            activeTabText = data.text,
-            categoryName = data.text,
-            CustomTooltipFunction = function(tooltip)
-                SetTooltipText(tooltip, "Enable / disable all addons of " .. data.text)
-            end,
-            tooltip = "tooltip",
-            alwaysShowTooltip = true,
-            descriptor = 1,
-            normal = "esoui/art/buttons/edit_cancel_up.dds",
-            pressed = "esoui/art/buttons/edit_cancel_up.dds",
-            highlight = "esoui/art/buttons/edit_cancel_over.dds",
-            disabled = "esoui/art/buttons/edit_cancel_down.dds",
-            callback = function(tabData)
-                d("Click " .. data.text .. " (" .. data.sortIndex .. ")")
-                control.toolBar:SetHidden(true)
-                ADD_ON_MANAGER:RefreshData()
-                ZO_MenuBar_ClearSelection(control.toolBar)
-                PlaySound(SOUNDS.DEFAULT_CLICK)
-            end
-        }
+
+        local function CreateButtonData(tooltipString, nb, normal, highlight, disabled, functionCallback)
+            return {
+                activeTabText = data.text,
+                categoryName = data.text,
+                CustomTooltipFunction = function(tooltip)
+                    SetTooltipText(tooltip, tooltipString .. data.text)
+                end,
+                tooltip = "tooltip",
+                alwaysShowTooltip = true,
+                descriptor = nb,
+                normal = normal,
+                pressed = normal,
+                highlight = highlight,
+                disabled = disabled,
+                callback = function(tabData)
+                    functionCallback(tabData)
+
+                    control.toolBar:SetHidden(true)
+                    ADD_ON_MANAGER:RefreshData()
+                    ZO_MenuBar_ClearSelection(control.toolBar)
+                    PlaySound(SOUNDS.DEFAULT_CLICK)
+                end
+            }
+        end
+
+        local function callbackEnableDisable(tabData)
+            d("Click Enable " .. data.text .. " (" .. data.sortIndex .. ")")
+        end
+        local function callbackShowHide(tabData)
+            d("Click Show " .. data.text .. " (" .. data.sortIndex .. ")")
+        end
     
-        ZO_MenuBar_AddButton(control.toolBar, buttonData)
+        ZO_MenuBar_AddButton(control.toolBar, CreateButtonData("Show / hide all addons of ", 1, "esoui/art/buttons/rightarrow_up.dds", "esoui/art/buttons/rightarrow_over.dds", "esoui/art/buttons/rightarrow_down.dds", callbackShowHide))
+        ZO_MenuBar_AddButton(control.toolBar, CreateButtonData("Enable / disable all addons of ", 2, "esoui/art/buttons/edit_cancel_up.dds", "esoui/art/buttons/edit_cancel_over.dds", "esoui/art/buttons/edit_cancel_down.dds", callbackEnableDisable))
 
         control.toolBar:SetHidden(false)
         local rowNb = control:GetName():gsub("ZO_AddOnsList2Row", "")
