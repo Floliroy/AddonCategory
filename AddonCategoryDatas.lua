@@ -16,6 +16,7 @@ AddonCategory.defaultSV = {
     },
     ["sectionsOpen"] = {},
     ["AlignGrid"] = "User Interface",
+    ["AUI"] = "User Interface",
     ["Azurah"] = "User Interface",
     ["BanditsUserInterface"] = "User Interface",
     ["CombatMetronome"] = "User Interface",
