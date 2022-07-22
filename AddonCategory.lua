@@ -2,7 +2,7 @@ AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
 AddonCategory.name = "AddonCategory"
-AddonCategory.version = "0.2"
+AddonCategory.version = "1"
 
 local sV
 
