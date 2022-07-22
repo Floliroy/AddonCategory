@@ -1,5 +1,5 @@
 ## Title: AddonCategory
-## APIVersion: 100035
+## APIVersion: 101034 100035
 ## Author: Floliroy
 ## Version: 0.2
 ## DependsOn: LibAddonMenu-2.0
