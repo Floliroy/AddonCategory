@@ -2,7 +2,7 @@ AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
 AddonCategory.name = "AddonCategory"
-AddonCategory.version = "1"
+AddonCategory.version = "1.1"
 
 local sV
 
@@ -281,7 +281,7 @@ local function SortScrollList(self)
     self:AddAddonTypeSection(IS_LIBRARY, GetString(SI_ADDON_MANAGER_SECTION_LIBRARIES))
 end
 
-function OnExpandButtonClicked(self, row)
+local function OnExpandButtonClicked(self, row)
     local scrollData = ZO_ScrollList_GetDataList(self.list)
     local data = ZO_ScrollList_GetData(row)
 

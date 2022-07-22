@@ -1,8 +1,8 @@
 ## Title: AddonCategory
 ## APIVersion: 101034 100035
 ## Author: Floliroy
-## Version: 1
-## DependsOn: LibAddonMenu-2.0
+## Version: 1.1
+## DependsOn: LibAddonMenu-2.0>=34
 ## SavedVariables: AddonCategoryVariables
 
 ; This Add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. 

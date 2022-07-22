@@ -3,18 +3,23 @@ local AddonCategory = AddonCategory
 
 local LAM2 = LibAddonMenu2
 
-local function getArrayCategoriesLength(sV)
-    local array = {}
-    for i=1, #sV.listCategory do
-        table.insert(array, i)
+local arrayLength = {}
+
+local function getArrayCategoriesLength()
+    arrayLength = {}
+    for i=1, #AddonCategory.savedVariables.listCategory do
+        table.insert(arrayLength, i)
     end
-    return array
 end
 
+
 local function UpdateAllChoices()
+    getArrayCategoriesLength()
+
     Categories_dropdown:UpdateChoices()
     CategoriesName_dropdown:UpdateChoices()
     CategoriesOrder_dropdown:UpdateChoices()
+    NewOrder_dropdown:UpdateChoices()
 end
 
 function AddonCategory.CreateSettingsWindow()
@@ -30,7 +35,7 @@ function AddonCategory.CreateSettingsWindow()
 	}
 	
 	local cntrlOptionsPanel = LAM2:RegisterAddonPanel("AddonCategory_Settings", panelData)
-	local sV = AddonCategory.savedVariables
+    local sV = AddonCategory.savedVariables
 
     local addon, category, newCategory, categoryName, newCategoryName, categoryOrder, newOrder
 
@@ -39,6 +44,7 @@ function AddonCategory.CreateSettingsWindow()
         table.insert(addonsList, value)
     end
     table.sort(addonsList, function (a, b) return a < b end)
+    getArrayCategoriesLength()
 	
 	local optionsData = {
 		{
@@ -62,6 +68,14 @@ function AddonCategory.CreateSettingsWindow()
             tooltip = "Add a new category with the name you typed above.",
             func = function()
                 if newCategory ~= nil and newCategory ~= "" then
+                    for key, value in pairs(sV.listCategory) do
+                        if value == newCategory then 
+                            d("Category's name |cFFFFFF" .. value .. "|r already present.\nUnable to add...")
+                            newCategory = nil
+                            return 
+                        end
+                    end
+
                     table.insert(sV.listCategory, newCategory)
                     UpdateAllChoices()
                 end
@@ -73,12 +87,20 @@ function AddonCategory.CreateSettingsWindow()
             tooltip = "Delete the selected category below.",
             func = function()
                 if category ~= nil then
+                    for key, value in pairs(AddonCategory.listAddons) do
+                        if sV[value] == category then 
+                            d("Addons are present in the category |cFFFFFF" .. category .. "|r.\nUnable to delete...")
+                            return 
+                        end
+                    end
+
                     for i, v in ipairs(sV.listCategory) do
                         if v == category then
                             table.remove(sV.listCategory, i)
                             break
                         end
                     end
+
                     UpdateAllChoices()
                 end
             end,
@@ -125,6 +147,7 @@ function AddonCategory.CreateSettingsWindow()
             func = function()
                 if addon ~= nil and category ~= nil then
                     sV[addon] = category
+                    d("Addon |cFFFFFF" .. addon .. "|r linked to |cFFFFFF" .. category .. "|r category.")
                 end
             end,
         },
@@ -169,6 +192,14 @@ function AddonCategory.CreateSettingsWindow()
             func = function()
                 if categoryName ~= nil and newCategoryName ~= nil then
                     for key, value in pairs(sV.listCategory) do
+                        if value == newCategoryName then 
+                            d("Category's name |cFFFFFF" .. newCategoryName .. "|r already present.\nUnable to edit...")
+                            newCategoryName = nil
+                            return 
+                        end
+                    end
+
+                    for key, value in pairs(sV.listCategory) do
                         if value == categoryName then 
                             sV.listCategory[key] = newCategoryName
                             break
@@ -179,6 +210,7 @@ function AddonCategory.CreateSettingsWindow()
                             sV[value] = newCategoryName
                         end
                     end
+                    
                     UpdateAllChoices()
                 end
             end,
@@ -186,7 +218,7 @@ function AddonCategory.CreateSettingsWindow()
         {
             type = "dropdown",
 			name = "Choose Category",
-			tooltip = "Choose a Category to change it order.",
+			tooltip = "Choose a category to change it order.",
 			choices = sV.listCategory,
 			default = sV.listCategory[1],
 			getFunc = function() return categoryOrder end,
@@ -204,12 +236,12 @@ function AddonCategory.CreateSettingsWindow()
         {
             type = "dropdown",
 			name = "New Order",
-			tooltip = "Choose a Category to change it order.",
-			choices = getArrayCategoriesLength(sV),
-			default = getArrayCategoriesLength(sV)[1],
+			tooltip = "Choose a new order for the selected category.",
+			choices = arrayLength,
+			default = arrayLength[1],
 			getFunc = function() return newOrder end,
 			setFunc = function(selected)
-				for index, name in ipairs(getArrayCategoriesLength(sV)) do
+				for index, name in ipairs(arrayLength) do
 					if name == selected then
 						newOrder = name
 					end
@@ -234,6 +266,7 @@ function AddonCategory.CreateSettingsWindow()
                             oldCategory = value
                         end
                     end
+
                     for key, value in pairs(sV.listCategory) do
                         if key == oldOrder then
                             sV.listCategory[key] = oldCategory
@@ -242,6 +275,7 @@ function AddonCategory.CreateSettingsWindow()
                             sV.listCategory[key] = categoryOrder
                         end
                     end
+
                     UpdateAllChoices()
                 end
             end,
