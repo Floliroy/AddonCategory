@@ -47,10 +47,13 @@ local function BuildMasterList(self)
     end
 
     AddonCategory.listAddons = {}
+    AddonCategory.listLibraries = {}
     for i = 1, AddOnManager:GetNumAddOns() do
         local name, title, author, description, enabled, state, isOutOfDate, isLibrary = AddOnManager:GetAddOnInfo(i)
         if isLibrary ~= IS_LIBRARY then
             AddonCategory.listAddons[i] = name
+        else
+            AddonCategory.listLibraries[i] = name
         end
 
         local entryData = {
@@ -110,6 +113,7 @@ local function BuildMasterList(self)
     end
 end
 
+local libraryText = nil
 local _AddAddonTypeSection = ADD_ON_MANAGER.AddAddonTypeSection
 local function AddAddonTypeSection(self, isLibrary, sectionTitleText)
 
@@ -122,14 +126,19 @@ local function AddAddonTypeSection(self, isLibrary, sectionTitleText)
         end
     end
 
-    if customCategory == true then
+    if customCategory == true or isLibrary == true then
         local addonEntries = self.addonTypes[isLibrary]
         table.sort(addonEntries, self.sortCallback)
 
         local scrollData = ZO_ScrollList_GetDataList(self.list)
-        scrollData[#scrollData + 1] = ZO_ScrollList_CreateDataEntry(SECTION_HEADER_DATA, { isLibrary = isLibrary, text = isLibrary })
+        local titleText = isLibrary
+        if isLibrary == true then
+            titleText = sectionTitleText
+            libraryText = sectionTitleText
+        end
+        scrollData[#scrollData + 1] = ZO_ScrollList_CreateDataEntry(SECTION_HEADER_DATA, { isLibrary = isLibrary, text = titleText })
         for _, entryData in ipairs(addonEntries) do
-            if sV.sectionsOpen[isLibrary] == nil or sV.sectionsOpen[isLibrary] == true then
+            if sV.sectionsOpen[sectionTitleText] == nil or sV.sectionsOpen[sectionTitleText] == true then
                 if entryData.expandable and expandedAddons[entryData.index] then
                     entryData.expanded = true
 
@@ -162,7 +171,7 @@ local function SetupSectionHeaderRow(self, control, data)
         end
     end
 
-    if customCategory == true then
+    if customCategory == true or data.isLibrary == true then
         local previousText = control.textControl:GetText()
         control.textControl:SetText(data.text)
         control.checkboxControl:SetHidden(true)
@@ -217,14 +226,20 @@ local function SetupSectionHeaderRow(self, control, data)
             if sectionsEnable[data.text] == true then
                 textTrueFalse = "true"
             end
-            for key, value in pairs(AddonCategory.listAddons) do
-                if sV[value] == data.text then
+            if data.text == libraryText then 
+                for key, value in pairs(AddonCategory.listLibraries) do
                     AddOnManager:SetAddOnEnabled(key, sectionsEnable[data.text])
+                end
+            else 
+                for key, value in pairs(AddonCategory.listAddons) do
+                    if sV[value] == data.text then
+                        AddOnManager:SetAddOnEnabled(key, sectionsEnable[data.text])
+                    end
                 end
             end
             sectionsEnable[data.text] = not sectionsEnable[data.text]
             ADD_ON_MANAGER.isDirty = true
-            ADD_ON_MANAGER:RefreshMultiButton()
+            --ADD_ON_MANAGER:RefreshMultiButton()
         end
         local function callbackShowHide(tabData)
             if sV.sectionsOpen[data.text] == nil then
