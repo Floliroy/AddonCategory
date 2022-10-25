@@ -2,7 +2,7 @@ AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
 AddonCategory.name = "AddonCategory"
-AddonCategory.version = "1.3"
+AddonCategory.version = "1.4"
 
 local sV
 
@@ -327,6 +327,24 @@ ADD_ON_MANAGER.AddAddonTypeSection = AddAddonTypeSection
 ADD_ON_MANAGER.SetupSectionHeaderRow = SetupSectionHeaderRow
 ADD_ON_MANAGER.SortScrollList = SortScrollList
 ADD_ON_MANAGER.OnExpandButtonClicked = OnExpandButtonClicked
+
+function AddonCategory.AssignAddonToCategory(addonName, categoryName)
+    for _, name in pairs(AddonCategory.baseCategories) do
+        if name == categoryName then
+            if not sV then
+                zo_callLater(function() 
+                    if sV[addonName] == nil then
+                        sV[addonName] = categoryName
+                    end
+                end, 3 * 1000)
+            else
+                if sV[addonName] == nil then
+                    sV[addonName] = categoryName
+                end
+            end
+        end
+    end
+end
 
 ----------
 -- INIT --

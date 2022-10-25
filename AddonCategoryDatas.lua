@@ -1,6 +1,19 @@
 AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
+AddonCategory.baseCategories = {
+    UserInterface = "User Interface",
+    Trackers = "Trackers",
+    Combat = "Combat",
+    PvE = "PvE",
+    PvP = "PvP",
+    Util = "Util",
+    Craft = "Craft",
+    Housing = "Housing",
+    Map = "Map",
+    Class = "Class",
+}
+
 AddonCategory.defaultSV = {
     ["listCategory"] = {
         [1] = "User Interface",

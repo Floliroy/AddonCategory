@@ -87,12 +87,18 @@ function AddonCategory.CreateSettingsWindow()
             tooltip = "Delete the selected category below.",
             func = function()
                 if category ~= nil then
+                    for _, name in pairs(AddonCategory.baseCategories) do
+                        if name == category then
+                            d("You can't delete category |cFFFFFF" .. category .. "|r.\nThis is a base category...")
+                            return
+                        end
+                    end     
                     for key, value in pairs(AddonCategory.listAddons) do
                         if sV[value] == category then 
                             d("Addons are present in the category |cFFFFFF" .. category .. "|r.\nUnable to delete...")
                             return 
                         end
-                    end
+                    end               
 
                     for i, v in ipairs(sV.listCategory) do
                         if v == category then
