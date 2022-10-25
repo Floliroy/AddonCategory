@@ -2,7 +2,7 @@ AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
 AddonCategory.name = "AddonCategory"
-AddonCategory.version = "1.2"
+AddonCategory.version = "1.3"
 
 local sV
 
@@ -48,6 +48,7 @@ local function BuildMasterList(self)
 
     AddonCategory.listAddons = {}
     AddonCategory.listLibraries = {}
+    AddonCategory.listNonAssigned = {}
     for i = 1, AddOnManager:GetNumAddOns() do
         local name, title, author, description, enabled, state, isOutOfDate, isLibrary = AddOnManager:GetAddOnInfo(i)
         if isLibrary ~= IS_LIBRARY then
@@ -71,6 +72,8 @@ local function BuildMasterList(self)
 		
 		if sV[name] ~= nil then
 			entryData.isCustomCategory = true
+        elseif isLibrary ~= IS_LIBRARY then
+            table.insert(AddonCategory.listNonAssigned, name)
 		end
 
         if author ~= "" then

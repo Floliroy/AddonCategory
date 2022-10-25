@@ -121,6 +121,7 @@ function AddonCategory.CreateSettingsWindow()
 			end,
             scrollable = true,
 			width = "half",
+            reference = "Addon_dropdown",
         },
         {
             type = "dropdown",
@@ -142,14 +143,40 @@ function AddonCategory.CreateSettingsWindow()
         },
         {
             type = "button",
+            name = "Select Non Assigned",
+            tooltip = "Select first addon installed non assigned to a category.",
+            func = function()
+                for i, v in ipairs(AddonCategory.listNonAssigned) do
+                    addon = v
+                    break
+                end
+                Addon_dropdown:UpdateValue()
+            end,
+            disabled = function() return #AddonCategory.listNonAssigned <= 0 end,
+			width = "half",
+            reference = "AddonNonAssigned_button",
+        },
+        {
+            type = "button",
             name = "Link Between",
             tooltip = "Link the selected addon with the selected category.",
             func = function()
                 if addon ~= nil and category ~= nil then
                     sV[addon] = category
                     d("Addon |cFFFFFF" .. addon .. "|r linked to |cFFFFFF" .. category .. "|r category.")
+
+                    for i, v in ipairs(AddonCategory.listNonAssigned) do
+                        if v == addon then
+                            table.remove(AddonCategory.listNonAssigned, i)
+                            addon = nil
+                            Addon_dropdown:UpdateValue()
+                            break
+                        end
+                    end
+                    AddonNonAssigned_button:UpdateDisabled()
                 end
             end,
+			width = "half",
         },
 		{
 			type = "header",
