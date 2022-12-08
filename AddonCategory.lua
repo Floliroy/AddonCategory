@@ -2,7 +2,7 @@ AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
 AddonCategory.name = "AddonCategory"
-AddonCategory.version = "1.4.1"
+AddonCategory.version = "1.5"
 AddonCategory.listAddons = {}
 AddonCategory.listLibraries = {}
 AddonCategory.listNonAssigned = {}
