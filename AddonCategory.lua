@@ -2,7 +2,7 @@ AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
 AddonCategory.name = "AddonCategory"
-AddonCategory.version = "1.5"
+AddonCategory.version = "1.5.1"
 AddonCategory.listAddons = {}
 AddonCategory.listLibraries = {}
 AddonCategory.listNonAssigned = {}
@@ -293,6 +293,7 @@ local function SetupSectionHeaderRow(self, control, data)
     end
 end
 
+AddonCategory.indexCategories = {}
 local function SortScrollList(self)
     self:ResetDataTypes()
     local scrollData = ZO_ScrollList_GetDataList(self.list)        
@@ -308,6 +309,15 @@ local function SortScrollList(self)
         end
     end
     self:AddAddonTypeSection(IS_LIBRARY, GetString(SI_ADDON_MANAGER_SECTION_LIBRARIES))
+
+    local newScrollData = ZO_ScrollList_GetDataList(self.list)
+    for key, value in pairs(newScrollData) do
+        for i=1, #sV.listCategory do
+            if sV.listCategory[i] == value.data.isLibrary then 
+                AddonCategory.indexCategories[sV.listCategory[i]] = key
+            end
+        end
+    end
 end
 
 local function OnExpandButtonClicked(self, row)
@@ -355,6 +365,10 @@ function AddonCategory.AssignAddonToCategory(addonName, categoryName)
             end
         end
     end
+end
+
+function AddonCategory.getIndexOfCategory(categoryName)
+    return AddonCategory.indexCategories[categoryName]
 end
 
 ----------
