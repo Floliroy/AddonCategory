@@ -2,10 +2,7 @@ AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
 AddonCategory.name = "AddonCategory"
-AddonCategory.version = "1.5.1"
-AddonCategory.listAddons = {}
-AddonCategory.listLibraries = {}
-AddonCategory.listNonAssigned = {}
+AddonCategory.version = "1.5.2"
 
 local sV
 
@@ -16,7 +13,6 @@ local IS_LIBRARY = true
 local IS_ADDON = false
 
 local AddOnManager = GetAddOnManager()
-local votanAddonListPresent = false
 
 local expandedAddons = {}
 
@@ -34,97 +30,91 @@ local function StripText(text)
     return text:gsub("|c%x%x%x%x%x%x", "")
 end
 
-local function resetList()
-	AddonCategory.listAddons = {}
-    AddonCategory.listLibraries = {}
-    AddonCategory.listNonAssigned = {}
-end
-
-local function addAddonToList(index, name, isLibrary)
-	if isLibrary ~= IS_LIBRARY then
-		AddonCategory.listAddons[index] = name
-	else
-		AddonCategory.listLibraries[index] = name
-	end
-	
-	if sV[name] == nil and isLibrary ~= IS_LIBRARY then
-		table.insert(AddonCategory.listNonAssigned, name)
-	end
-end
-
-local function populateList()
-	resetList()
-
-	for i = 1, AddOnManager:GetNumAddOns() do
-		local name, _, _, _, _, _, _, isLibrary = AddOnManager:GetAddOnInfo(i)
-
-        addAddonToList(i, name, isLibrary)
-	end
-end
-
 local function BuildMasterList(self)
-    self.addonTypes = self.addonTypes or {}
-    self.addonTypes[IS_ADDON] = self.addonTypes[IS_ADDON] or {}
+    self.addonTypes = {}
+    self.addonTypes[IS_LIBRARY] = {}
+    self.addonTypes[IS_ADDON] = {}
     for key, value in pairs(sV.listCategory) do
         self.addonTypes[value] = {}
     end
 
-    resetList()
-
-	for i = 1, #self.addonTypes[IS_ADDON] do
-		local entryData = self.addonTypes[IS_ADDON][i]
-
-		addAddonToList(entryData.index, entryData.addOnFileName, IS_ADDON)
-
-		entryData.isCustomCategory = false
-		if sV[entryData.addOnFileName] ~= nil then
-			entryData.isCustomCategory = true
-		end
-        
-        if entryData.isCustomCategory == true then
-			self.addonTypes[IS_ADDON][i] = nil
-            table.insert(self.addonTypes[sV[entryData.addOnFileName]], entryData)
-        else
-            table.insert(self.addonTypes[IS_ADDON], entryData)
-        end
+    if self.selectedCharacterEntry and not self.selectedCharacterEntry.allCharacters then
+        self.isAllFilterSelected = false
+        AddOnManager:SetAddOnFilter(CreateAddOnFilter(self.selectedCharacterEntry.name))
+    else
+        self.isAllFilterSelected = true
+        AddOnManager:RemoveAddOnFilter()
     end
 
-	for i = 1, #self.addonTypes[IS_LIBRARY] do
-		local entryData = self.addonTypes[IS_LIBRARY][i]
-		addAddonToList(entryData.index, entryData.addOnFileName, IS_LIBRARY)
-	end
+    AddonCategory.listAddons = {}
+    AddonCategory.listLibraries = {}
+    AddonCategory.listNonAssigned = {}
+    for i = 1, AddOnManager:GetNumAddOns() do
+        local name, title, author, description, enabled, state, isOutOfDate, isLibrary = AddOnManager:GetAddOnInfo(i)
+        if isLibrary ~= IS_LIBRARY then
+            AddonCategory.listAddons[i] = name
+        else
+            AddonCategory.listLibraries[i] = name
+        end
 
-	if votanAddonListPresent == true then
-		--Reset to original sortCallback
-		self.sortCallback = function(entry1, entry2)
-			return ZO_TableOrderingFunction(entry1, entry2, self.currentSortKey, self.sortKeys, self.currentSortDirection)
-		end
-	end
-end
-
---disable addon indent do by Votan's Addon List because this feature can't work when our addon is enabled
-local function DisableVotanAddonListIndent(control)
-	local indent = 0
-
-	local enableButton = control:GetNamedChild("Enabled")
-	enableButton:SetAnchor(TOPLEFT, nil, TOPLEFT, 7 + indent, 7)
-	
-	local name = control:GetNamedChild("Name")
-	name:SetWidth(385 - indent)
-end
-
--- Can't use SecurePostHook because need to be called on the callback function returned by GetRowSetupFunction()
-local orgGetRowSetupFunction = ZO_AddOnManager.GetRowSetupFunction
-function ZO_AddOnManager:GetRowSetupFunction()
-	return function(...)
-		local orgSetup = orgGetRowSetupFunction(self)
-		orgSetup(...)
+        local entryData = {
+            index = i,
+            addOnFileName = name,
+            addOnName = title,
+            strippedAddOnName = StripText(title),
+            addOnDescription = description,
+            addOnEnabled = enabled,
+            addOnState = state,
+            isOutOfDate = isOutOfDate,
+            isLibrary = isLibrary,
+            isCustomCategory = false,
+            dependsOn = {}
+        }
 		
-		if votanAddonListPresent == true then
-			DisableVotanAddonListIndent(...)
+		if sV[name] ~= nil then
+			entryData.isCustomCategory = true
+        elseif isLibrary ~= IS_LIBRARY then
+            table.insert(AddonCategory.listNonAssigned, name)
 		end
-		
-	end
+
+        if author ~= "" then
+            local strippedAuthor = StripText(author)
+            entryData.addOnAuthorByLine = zo_strformat(SI_ADD_ON_AUTHOR_LINE, author)
+            entryData.strippedAddOnAuthorByLine = zo_strformat(SI_ADD_ON_AUTHOR_LINE, strippedAuthor)
+        else
+            entryData.addOnAuthorByLine = ""
+            entryData.strippedAddOnAuthorByLine = ""
+        end
+
+        local dependencyText = ""
+        for j = 1, AddOnManager:GetAddOnNumDependencies(i) do
+            local dependencyName, dependencyExists, dependencyActive, dependencyMinVersion, dependencyVersion = AddOnManager:GetAddOnDependencyInfo(i, j)
+            local dependencyTooLowVersion = dependencyVersion < dependencyMinVersion        
+            
+            local dependencyInfoLine = dependencyName
+            if not self.isAllFilterSelected and (not dependencyActive or not dependencyExists or dependencyTooLowVersion) then
+                entryData.hasDependencyError = true
+                if not dependencyExists then
+                    dependencyInfoLine = zo_strformat(SI_ADDON_MANAGER_DEPENDENCY_MISSING, dependencyName)
+                elseif not dependencyActive then
+                    dependencyInfoLine = zo_strformat(SI_ADDON_MANAGER_DEPENDENCY_DISABLED, dependencyName)
+                elseif dependencyTooLowVersion then
+                    dependencyInfoLine = zo_strformat(SI_ADDON_MANAGER_DEPENDENCY_TOO_LOW_VERSION, dependencyName)
+                end
+                dependencyInfoLine = ZO_ERROR_COLOR:Colorize(dependencyInfoLine)
+            end
+            dependencyText = string.format("%s\n    %s  %s", dependencyText, GetString(SI_BULLET), dependencyInfoLine)
+        end
+        entryData.addOnDependencyText = dependencyText
+
+        entryData.expandable = (description ~= "") or (dependencyText ~= "")
+
+        if entryData.isCustomCategory == true then
+            table.insert(self.addonTypes[sV[name]], entryData)
+        else
+            table.insert(self.addonTypes[isLibrary], entryData)
+        end
+    end
 end
 
 local libraryText = nil
@@ -343,7 +333,7 @@ local function OnExpandButtonClicked(self, row)
     self:CommitScrollList()
 end
 
-SecurePostHook(ADD_ON_MANAGER, "BuildMasterList", BuildMasterList)
+ADD_ON_MANAGER.BuildMasterList = BuildMasterList
 ADD_ON_MANAGER.AddAddonTypeSection = AddAddonTypeSection
 ADD_ON_MANAGER.SetupSectionHeaderRow = SetupSectionHeaderRow
 ADD_ON_MANAGER.SortScrollList = SortScrollList
@@ -380,17 +370,13 @@ function AddonCategory:Initialize()
 	sV = AddonCategory.savedVariables
 
 	--Settings
-	populateList()
+    ADD_ON_MANAGER.BuildMasterList(self)
 	AddonCategory.CreateSettingsWindow()
 
 	EVENT_MANAGER:UnregisterForEvent(AddonCategory.name, EVENT_ADD_ON_LOADED)
 end
 
 function AddonCategory.OnAddOnLoaded(event, addonName)
-	if addonName == "LibVotansAddonList" then
-		votanAddonListPresent = true
-	end
-
 	if addonName ~= AddonCategory.name then return end
     AddonCategory:Initialize()
 end
