@@ -71,6 +71,8 @@ local function BuildMasterList(self)
 
     resetList()
 
+	isAddonWithoutNilValues = {}
+
 	for i = 1, #self.addonTypes[IS_ADDON] do
 		local entryData = self.addonTypes[IS_ADDON][i]
 
@@ -85,9 +87,11 @@ local function BuildMasterList(self)
 			self.addonTypes[IS_ADDON][i] = nil
             table.insert(self.addonTypes[sV[entryData.addOnFileName]], entryData)
         else
-            table.insert(self.addonTypes[IS_ADDON], entryData)
+            table.insert(isAddonWithoutNilValues, entryData)
         end
     end
+
+	self.addonTypes[IS_ADDON] = isAddonWithoutNilValues
 
 	for i = 1, #self.addonTypes[IS_LIBRARY] do
 		local entryData = self.addonTypes[IS_LIBRARY][i]
