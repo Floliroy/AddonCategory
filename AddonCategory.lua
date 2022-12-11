@@ -2,7 +2,7 @@ AddonCategory = AddonCategory or {}
 local AddonCategory = AddonCategory
 
 AddonCategory.name = "AddonCategory"
-AddonCategory.version = "1.5.2"
+AddonCategory.version = "1.5.3"
 
 local sV
 
@@ -306,6 +306,9 @@ local function SortScrollList(self)
             if sV.listCategory[i] == value.data.isLibrary then 
                 AddonCategory.indexCategories[sV.listCategory[i]] = key
             end
+        end
+        if value.data.isLibrary == IS_LIBRARY then
+            AddonCategory.indexCategories[GetString(SI_ADDON_MANAGER_SECTION_LIBRARIES)] = key
         end
     end
 end
