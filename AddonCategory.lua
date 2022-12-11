@@ -80,9 +80,15 @@ local function BuildMasterList(self)
 
 		entryData.isCustomCategory = false
 		if sV[entryData.addOnFileName] ~= nil then
-			entryData.isCustomCategory = true
+			-- I have a case with renamed base category after manually change the SavedVariables to unassigned
+			-- But I suppose can also happend if I install a pre-assigned addon
+			if self.addonTypes[sV[entryData.addOnFileName]] == nil then
+				entryData.isCustomCategory = false
+			else
+				entryData.isCustomCategory = true
+			end
 		end
-        
+
         if entryData.isCustomCategory == true then
 			self.addonTypes[IS_ADDON][i] = nil
             table.insert(self.addonTypes[sV[entryData.addOnFileName]], entryData)
